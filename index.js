@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import express from 'express';
-import spotsRouter from './routes/spots.js';
-import router from "./routes/spots.js";
+import spotsRouter from './routes/team.js';
+import router from "./routes/team.js";
 
 try {
     const app = express();
@@ -41,7 +41,7 @@ try {
         }
     })
 
-    app.use('/spots', spotsRouter);
+    app.use('/teams', spotsRouter);
 
     app.listen(process.env.EXPRESS_PORT, () => {
         console.log(`Server werkt op poort: ${process.env.EXPRESS_PORT}`)
