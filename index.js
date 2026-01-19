@@ -2,9 +2,11 @@ import mongoose from "mongoose";
 import express from 'express';
 import spotsRouter from './routes/team.js';
 import router from "./routes/team.js";
+import cors from 'cors';
 
 try {
     const app = express();
+    app.use(cors());
     await mongoose.connect(`mongodb://127.0.0.1:27017/${process.env.DB_NAME}`,{
         serverSelectionTimeoutMS: 3000
     });
