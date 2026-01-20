@@ -76,7 +76,6 @@ router.get("/", async (req, res, ret) => {
 
 router.get("/:id", async (req, res) => {
     try {
-        console.log(req.headers);
         const team = await Team.findById(req.params.id);
         if (!team) return res.status(404).json({ message: "team not found" });
         res.setHeader("Content-Type", "application/json");

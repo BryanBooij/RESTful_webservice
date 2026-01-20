@@ -5,7 +5,7 @@ const teamSchema = new mongoose.Schema({
     description: { type: String, required: true },
     review: { type: String, required: true },
     loc: { type: { type: String}, coordinates: [Number]},
-    imageUrl: { type: String},
+    imageUrl: { type: String,  required: true },
     hasBookmark:  { type: Boolean, default: false},
     date: { type: Date, default: Date.now}
 },
