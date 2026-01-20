@@ -1,11 +1,15 @@
 import mongoose from "mongoose";
 import express from 'express';
 import spotsRouter from './routes/team.js';
-import cors from 'cors';
 
 try {
-    // manually accept options before cors()
+    // manually accept options cors
     const app = express();
+    app.use((req, res, next) => {
+        res.header("Access-Control-Allow-Origin", "*");
+        next();
+    });
+
     app.options("/teams", (req, res) => {
         res.header("Allow", "GET,POST,OPTIONS");
         res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
@@ -21,7 +25,7 @@ try {
         res.header("Access-Control-Allow-Origin", "*");
         res.status(204).send();
     });
-    app.use(cors());
+
     await mongoose.connect(`mongodb://127.0.0.1:27017/${process.env.DB_NAME}`,{
         serverSelectionTimeoutMS: 3000
     });
@@ -54,4 +58,3 @@ try {
 } catch (e) {
     console.log(e);
 }
-
