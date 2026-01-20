@@ -1,13 +1,60 @@
 import express from "express";
 import Team from "../models/Team.js";
-import { faker } from '@faker-js/faker';
 const router = express.Router();
 import eredivisieTeams from '../seeder/eredivisieSeeder.js';
 
-router.options('/', (req, res) =>{
-    res.header('Allow', 'GET,POST,OPTIONS');
-    res.status(204).send();
+router.delete("/:id", async (req, res) => {
+    try {
+        const team = await Team.findByIdAndDelete(req.params.id);
+
+        if (!team) {
+            return res.status(404).json({ message: "Team not found" });
+        }
+
+        res.status(204).send();
+    } catch (e) {
+        res.status(400).json({
+            message: "Invalid id",
+            error: e.message
+        });
+    }
 });
+
+
+router.post("/", async (req, res) => {
+    try {
+        const team = await Team.create(req.body);
+        res.status(201).json(team);
+    } catch (e) {
+        res.status(400).json({
+            message: "Team could not be made",
+            error: e.message
+        });
+    }
+});
+
+router.put("/:id", async (req, res) => {
+    try {
+        const team = await Team.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true, runValidators: true }
+        );
+
+        if (!team) {
+            return res.status(404).json({ message: "Team not found" });
+        }
+
+        res.json(team);
+    } catch (e) {
+        res.status(400).json({
+            message: "Update failed",
+            error: e.message
+        });
+    }
+});
+
+
 router.get("/", async (req, res, ret) => {
     try {
         const Teams = await Team.find().select('title description imageUrl');
@@ -15,10 +62,10 @@ router.get("/", async (req, res, ret) => {
             items:Teams,
             _links: {
                 self: {
-                    href: `${process.env.APPLICATION_URL}:${process.env.EXPRESS_PORT}/team`, // id word zelf gemaakt door mongoose
+                    href: `${process.env.APPLICATION_URL}:${process.env.EXPRESS_PORT}/teams`, // id word zelf gemaakt door mongoose
                 },
                 collection: {
-                    href: `${process.env.APPLICATION_URL}:${process.env.EXPRESS_PORT}/team`, // collection linkt naar de hoofd pagina waar de informatie in komt te staan
+                    href: `${process.env.APPLICATION_URL}:${process.env.EXPRESS_PORT}/teams`, // collection linkt naar de hoofd pagina waar de informatie in komt te staan
                 },
             }
         });
@@ -27,31 +74,17 @@ router.get("/", async (req, res, ret) => {
     }
 });
 
-router.options('/:id', (req, res) =>{
-    res.header('Allow', 'PUT,DELETE');
-    res.status(204).send();
-});
-
 router.get("/:id", async (req, res) => {
     try {
+        console.log(req.headers);
         const team = await Team.findById(req.params.id);
-        // const spot = await Spot.findOne(req.params.title);
-        //antwan manier
-        // if (spot === null){
-        //     res.status(404).send();
-        // }else{
-        //     res.json(spot);
-        // }
-        //andere manier
-        if (!team) {
-            return res.status(404).json({ message: "team not found" });
-        }
-        res.json(team);
+        if (!team) return res.status(404).json({ message: "team not found" });
+        res.setHeader("Content-Type", "application/json");
+        res.status(200).json(team);
     } catch (e) {
         res.status(400).json({ message: "Invalid id", error: e.message });
     }
 });
-
 
 router.post('/seed', async (req, res) => {
     await Team.deleteMany({});

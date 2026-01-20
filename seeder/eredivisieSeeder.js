@@ -1,5 +1,4 @@
 const eredivisieTeams = [
-    //todo fix the image urls apart from feyenoord and ajax
     {
         title: "Ajax",
         description: "AFC Ajax — Amsterdam based football club",

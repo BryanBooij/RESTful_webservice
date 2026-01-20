@@ -1,11 +1,26 @@
 import mongoose from "mongoose";
 import express from 'express';
 import spotsRouter from './routes/team.js';
-import router from "./routes/team.js";
 import cors from 'cors';
 
 try {
+    // manually accept options before cors()
     const app = express();
+    app.options("/teams", (req, res) => {
+        res.header("Allow", "GET,POST,OPTIONS");
+        res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+        res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+        res.header("Access-Control-Allow-Origin", "*");
+        res.status(204).send();
+    });
+
+    app.options("/teams/:id", (req, res) => {
+        res.header("Allow", "GET,PUT,DELETE,OPTIONS");
+        res.header("Access-Control-Allow-Methods", "GET,PUT,DELETE,OPTIONS");
+        res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+        res.header("Access-Control-Allow-Origin", "*");
+        res.status(204).send();
+    });
     app.use(cors());
     await mongoose.connect(`mongodb://127.0.0.1:27017/${process.env.DB_NAME}`,{
         serverSelectionTimeoutMS: 3000
@@ -17,31 +32,19 @@ try {
     //Middleware to support application/x-www-form-urlencoded Content-Type
     app.use(express.urlencoded({extended:true}));
 
-    //middleware example 1
-    app.use('/', (req, res, next) => {
-        // manier 1
-        // als het geen json is if anders else
-        if (req.header('Accept') !== 'application/json' && req.method !=='OPTIONS'){
-            res.status(406);
-            res.json({error: 'only json is allowed'});
-            return;
-        }
-        next();
-    });
-    //middleware example 2
-    app.use('/example', (req, res, next) => {
-        // manier 2
+    app.use((req, res, next) => {
         const acceptHeader = req.headers["accept"];
 
-        console.log(`Client accepteert: ${acceptHeader}`);
+        // OPTIONS requests altijd doorlaten
+        if (req.method === "OPTIONS") return next();
 
-        if (acceptHeader.includes("application/json")) {
-            res.json({ message: "Dit is een JSON-response" });
-            next();
-        } else {
-            res.status(406).send({message: "deze app accepteerd alleen json"});
+        if (!acceptHeader || !acceptHeader.includes("application/json")) {
+            // 406 = Not Acceptable
+            return res.status(406).json({ error: "only json is allowed" });
         }
-    })
+
+        next();
+    });
 
     app.use('/teams', spotsRouter);
 
