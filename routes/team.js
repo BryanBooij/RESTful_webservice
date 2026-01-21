@@ -57,16 +57,81 @@ router.put("/:id", async (req, res) => {
 
 router.get("/", async (req, res, ret) => {
     try {
-        const Teams = await Team.find().select('title description imageUrl');
-        res.json({
-            items:Teams,
+        // set base url for easier and more clean code
+        const baseUrl = `${process.env.APPLICATION_URL}:${process.env.EXPRESS_PORT}/teams`;
+        // count the amount of teams
+        const totalItems = await Team.countDocuments();
+        // if there is no limit (no pagination) basic view
+        if (!req.query.limit) {
+            const teams = await Team.find().select("title description imageUrl locationType");
+            return res.json({
+                items: teams.map(team => ({
+                    ...team.toObject(),
+                    _links: {
+                        self: { href: `${baseUrl}/${team._id}` },
+                        collection: { href: baseUrl }
+                    }
+                })),
+                _links: {
+                    self: { href: baseUrl },
+                    collection: { href: baseUrl }
+                },
+                pagination: {
+                    currentPage: 1,
+                    currentItems: teams.length,
+                    totalPages: 1,
+                    totalItems,
+                    _links: {
+                        first: { page: 1, href: baseUrl },
+                        last: { page: 1, href: baseUrl },
+                        previous: null,
+                        next: null
+                    }
+                }
+            });
+        }
+
+        // pagination view
+        const limit = parseInt(req.query.limit) || 10;
+        const page = parseInt(req.query.page) || 1;
+        const skip = (page - 1) * limit;
+        const totalPages = Math.ceil(totalItems / limit);
+        const teams = await Team.find()
+            .select("title description imageUrl locationType")
+            .skip(skip)
+            .limit(limit);
+
+        // Map over each team document and add _links for self and collection
+        const itemsWithLinks = teams.map(team => ({
+            ...team.toObject(),
             _links: {
-                self: {
-                    href: `${process.env.APPLICATION_URL}:${process.env.EXPRESS_PORT}/teams`, // id word zelf gemaakt door mongoose
-                },
-                collection: {
-                    href: `${process.env.APPLICATION_URL}:${process.env.EXPRESS_PORT}/teams`, // collection linkt naar de hoofd pagina waar de informatie in komt te staan
-                },
+                self: { href: `${baseUrl}/${team._id}` },
+                collection: { href: baseUrl }
+            }
+        }));
+
+        // Build pagination links for navigation link to first page, last, next, previous or null if its the last or first page
+        const paginationLinks = {
+            first: { page: 1, href: `${baseUrl}?page=1&limit=${limit}` },
+            last: { page: totalPages, href: `${baseUrl}?page=${totalPages}&limit=${limit}` },
+            previous: page > 1 ? { page: page - 1, href: `${baseUrl}?page=${page - 1}&limit=${limit}` } : null,
+            next: page < totalPages ? { page: page + 1, href: `${baseUrl}?page=${page + 1}&limit=${limit}` } : null
+        };
+
+        // Send the JSON response with pagination and self objects
+        res.json({
+            items: itemsWithLinks,
+            _links: {
+                self: { href: `${baseUrl}?page=${page}&limit=${limit}` },
+                collection: { href: baseUrl }
+            },
+            // pagination
+            pagination: {
+                currentPage: page,
+                currentItems: itemsWithLinks.length,
+                totalPages,
+                totalItems,
+                _links: paginationLinks
             }
         });
     } catch (e) {
