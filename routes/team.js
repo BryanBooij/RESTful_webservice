@@ -143,8 +143,7 @@ router.get("/:id", async (req, res) => {
     try {
         const team = await Team.findById(req.params.id);
         if (!team) return res.status(404).json({ message: "team not found" });
-        res.setHeader("Content-Type", "application/json");
-        res.status(200).json(team);
+        res.json(team);
     } catch (e) {
         res.status(400).json({ message: "Invalid id", error: e.message });
     }
