@@ -160,4 +160,25 @@ router.post('/seed', async (req, res) => {
     });
 });
 
+router.patch("/:id", async (req, res) => {
+    try {
+        const team = await Team.findByIdAndUpdate(
+            req.params.id,
+            { $set: req.body },
+            { new: true, runValidators: true }
+        );
+
+        if (!team) {
+            return res.status(404).json({ message: "Team not found" });
+        }
+
+        res.status(200).json(team);
+    } catch (e) {
+        res.status(400).json({
+            message: "Partial update failed",
+            error: e.message
+        });
+    }
+});
+
 export default router;
